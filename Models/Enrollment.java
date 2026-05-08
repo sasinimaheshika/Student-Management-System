@@ -1,13 +1,13 @@
 package Models;
 
 public class Enrollment {
-    private int studentId;
+    private int student_id;
     private int courseId;
     private double marks;
 
-    public Enrollment(int studentId, int courseId, double marks) {
-        this.studentId = studentId;
-        this.courseId = courseId;
+    public Enrollment(int student_id, int course_id, double marks) {
+        this.student_id = student_id;
+        this.courseId = course_id;
         this.marks = marks;
     }
 }
