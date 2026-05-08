@@ -3,8 +3,7 @@ import java.sql.*;
 import Models.*; 
 
 public class Main {
-    // Using a delimiter to ensure nextLine() works correctly with nextInt()
-    private static Scanner scanner = new Scanner(System.in).useDelimiter("\\n");
+    private static Scanner scanner = new Scanner(System.in);
     private static User currentUser = null;
 
     public static void main(String[] args) {
@@ -15,12 +14,18 @@ public class Main {
             } else {
                 currentUser.displayMenu();
                 System.out.print("Choose an option: ");
-                if (scanner.hasNextInt()) {
-                    int choice = scanner.nextInt();
-                    handleMenuChoice(choice);
-                } else {
-                    System.out.println("Invalid input. Please enter a number.");
-                    scanner.next(); 
+                try {
+                    if (scanner.hasNextInt()) {
+                        int choice = scanner.nextInt();
+                        scanner.nextLine(); // Consume the newline
+                        handleMenuChoice(choice);
+                    } else {
+                        System.out.println("Invalid input. Please enter a number.");
+                        scanner.nextLine(); // Clear the invalid input
+                    }
+                } catch (Exception e) {
+                    System.out.println("Error reading input.");
+                    scanner.nextLine();
                 }
             }
         }
@@ -29,9 +34,9 @@ public class Main {
     private static void login() {
         System.out.println("\n--- Login ---");
         System.out.print("Username: ");
-        String username = scanner.next();
+        String username = scanner.nextLine().trim();
         System.out.print("Password: ");
-        String password = scanner.next();
+        String password = scanner.nextLine().trim();
 
         try (Connection conn = DBConnection.getConnection()) {
             String sql = "SELECT * FROM users WHERE username = ? AND password = ?";
@@ -55,7 +60,9 @@ public class Main {
                 System.out.println("Invalid Credentials.");
             }
         } catch (SQLException e) {
-            System.out.println("Database Error: " + e.getMessage());
+            System.out.println("\n❌ Database Connection Failed!");
+            System.out.println("Error: " + e.getMessage());
+            System.out.println("Please check if the database server is running.\n");
         }
     }
 
@@ -72,7 +79,9 @@ public class Main {
                 System.out.println("Error: Student record not found in the students table.");
             }
         } catch (SQLException e) {
-            System.out.println("Fetch Error: " + e.getMessage());
+            System.out.println("\n❌ Database Connection Failed!");
+            System.out.println("Error: " + e.getMessage());
+            System.out.println("Please check if the database server is running.\n");
         }
     }
 
@@ -103,8 +112,8 @@ public class Main {
     // --- FULL CRUD IMPLEMENTATIONS ---
 
     private static void addStudent() {
-        System.out.print("Full Name: "); String name = scanner.next();
-        System.out.print("Email: "); String email = scanner.next();
+        System.out.print("Full Name: "); String name = scanner.nextLine().trim();
+        System.out.print("Email: "); String email = scanner.nextLine().trim();
         try (Connection conn = DBConnection.getConnection()) {
             String sql = "INSERT INTO students (name, email) VALUES (?, ?)";
             PreparedStatement pstmt = conn.prepareStatement(sql);
@@ -112,7 +121,9 @@ public class Main {
             pstmt.setString(2, email);
             pstmt.executeUpdate();
             System.out.println("Student Added Successfully.");
-        } catch (SQLException e) { System.out.println("Error: " + e.getMessage()); }
+        } catch (SQLException e) { 
+            System.out.println("❌ Database Error: " + e.getMessage());
+        }
     }
 
     private static void viewAllStudents() {
@@ -122,12 +133,15 @@ public class Main {
             while (rs.next()) {
                 System.out.println("ID: " + rs.getInt("student_id") + " | Name: " + rs.getString("name"));
             }
-        } catch (SQLException e) { System.out.println(e.getMessage()); }
+        } catch (SQLException e) { 
+            System.out.println("❌ Database Connection Failed!");
+            System.out.println("Error: " + e.getMessage());
+        }
     }
 
     private static void updateMarks() {
-        System.out.print("Student ID: "); int sId = scanner.nextInt();
-        System.out.print("New Marks: "); double marks = scanner.nextDouble();
+        System.out.print("Student ID: "); int sId = scanner.nextInt(); scanner.nextLine();
+        System.out.print("New Marks: "); double marks = scanner.nextDouble(); scanner.nextLine();
         try (Connection conn = DBConnection.getConnection()) {
             String sql = "UPDATE enrollments SET marks = ? WHERE student_id = ?";
             PreparedStatement pstmt = conn.prepareStatement(sql);
@@ -136,12 +150,15 @@ public class Main {
             int rows = pstmt.executeUpdate();
             if(rows > 0) System.out.println("Marks Updated.");
             else System.out.println("No enrollment found for this Student ID.");
-        } catch (SQLException e) { System.out.println(e.getMessage()); }
+        } catch (SQLException e) { 
+            System.out.println("❌ Database Error: " + e.getMessage());
+        }
     }
 
     private static void deleteStudent() {
         System.out.print("Enter ID to Delete: ");
         int id = scanner.nextInt();
+        scanner.nextLine();
         try (Connection conn = DBConnection.getConnection()) {
             String sql = "DELETE FROM students WHERE student_id = ?";
             PreparedStatement pstmt = conn.prepareStatement(sql);
@@ -149,12 +166,14 @@ public class Main {
             int rows = pstmt.executeUpdate();
             if (rows > 0) System.out.println("Deleted Successfully.");
             else System.out.println("Student ID not found.");
-        } catch (SQLException e) { System.out.println(e.getMessage()); }
+        } catch (SQLException e) { 
+            System.out.println("❌ Database Error: " + e.getMessage());
+        }
     }
 
     private static void addCourse() {
-        System.out.print("Course Name: "); String cName = scanner.next();
-        System.out.print("Course Code: "); String cCode = scanner.next();
+        System.out.print("Course Name: "); String cName = scanner.nextLine().trim();
+        System.out.print("Course Code: "); String cCode = scanner.nextLine().trim();
         try (Connection conn = DBConnection.getConnection()) {
             String sql = "INSERT INTO courses (course_name, course_code) VALUES (?, ?)";
             PreparedStatement pstmt = conn.prepareStatement(sql);
@@ -162,7 +181,9 @@ public class Main {
             pstmt.setString(2, cCode);
             pstmt.executeUpdate();
             System.out.println("Course Added.");
-        } catch (SQLException e) { System.out.println(e.getMessage()); }
+        } catch (SQLException e) { 
+            System.out.println("❌ Database Error: " + e.getMessage());
+        }
     }
 
     private static void viewMyResults() {
@@ -178,6 +199,9 @@ public class Main {
             while (rs.next()) {
                 System.out.println("Course: " + rs.getString("course_name") + " | Marks: " + rs.getDouble("marks"));
             }
-        } catch (SQLException e) { System.out.println(e.getMessage()); }
+        } catch (SQLException e) { 
+            System.out.println("❌ Database Connection Failed!");
+            System.out.println("Error: " + e.getMessage());
+        }
     }
 }
