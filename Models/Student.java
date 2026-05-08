@@ -5,8 +5,8 @@ public class Student extends User {
     private String email;
     private String phone;
 
-    public Student(int userId, String username, String password, String name, String email, String phone) {
-        super(userId, username, password, "STUDENT");
+    public Student(int user_id, String username, String password, String name, String email, String phone) {
+        super(user_id, username, password, "STUDENT");
         this.name = name;
         this.email = email;
         this.phone = phone;
