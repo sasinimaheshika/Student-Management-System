@@ -7,9 +7,9 @@ public class Main {
     private static User currentUser = null;
 
     public static void main(String[] args) {
-        System.out.println("\n " + drawLine("-", 40));
-        System.out.println("|       STUDENT INFORMATION SYSTEM       |");
-        System.out.println(" " + drawLine("-", 40));
+        System.out.println("\n\t\t\t " + drawLine("-", 40));
+        System.out.println("\t\t\t|       STUDENT INFORMATION SYSTEM       |");
+        System.out.println("\t\t\t " + drawLine("-", 40));
         
         while (true) {
             if (currentUser == null) {
@@ -91,12 +91,13 @@ public class Main {
         if (currentUser instanceof Admin) {
             switch (choice) {
                 case 1: addStudent(); break;
-                case 2: viewAllStudents(); break;
-                case 3: addCourse(); break;
-                case 4: viewAllCourses(); break;
-                case 5: updateMarks(); break;
-                case 6: deleteStudent(); break; 
-                case 7: logout(); break;
+                case 2: deleteStudent(); break;
+                case 3: updateStudent(); break; 
+                case 4: viewAllStudents(); break;
+                case 5: addCourse(); break;
+                case 6: viewAllCourses(); break;
+                case 7: addMarks(); break; 
+                case 8: logout(); break;
                 default: System.out.println("Invalid choice.");
             }
         } else {
@@ -131,7 +132,7 @@ public class Main {
         System.out.println("\n --------------------------");
         System.out.println("|      Add New Student     |");
         System.out.println(" --------------------------");
-        System.out.print("\n> Enter Full Name: "); String name = scanner.nextLine().trim();
+        System.out.print("> Enter Full Name: "); String name = scanner.nextLine().trim();
         System.out.print("> Enter Email: "); String email = scanner.nextLine().trim();
         System.out.print("> Enter Phone: "); String phone = scanner.nextLine().trim();
         System.out.print("> Enter Username for student: "); String uname = scanner.nextLine().trim();
@@ -170,6 +171,47 @@ public class Main {
         }
     }
 
+    private static void deleteStudent() {
+        System.out.println("\n -------------------------");
+        System.out.println("|      Delete Student     |");
+        System.out.println(" -------------------------");
+        System.out.print("> Enter Student ID to delete: ");
+        int id = scanner.nextInt();
+        try (Connection conn = DBConnection.getConnection()) {
+            // Because of foreign keys, deleting from 'users' will often handle 'students' if ON DELETE CASCADE is set.
+            String sql = "DELETE FROM users WHERE user_id = ?";
+            PreparedStatement pstmt = conn.prepareStatement(sql);
+            pstmt.setInt(1, id);
+            if(pstmt.executeUpdate() > 0) System.out.println("\n <  Student records removed.  >");
+        } catch (SQLException e) { System.out.println(e.getMessage()); }
+    }
+
+    private static void updateStudent() {
+        System.out.println("\n -------------------------");
+        System.out.println("|      Update Student     |");
+        System.out.println(" -------------------------");
+        System.out.print("> Enter Student ID to update: ");
+        int id = scanner.nextInt(); scanner.nextLine(); 
+        System.out.print("> Enter New Full Name: "); String name = scanner.nextLine().trim();
+        System.out.print("> Enter New Email: "); String email = scanner.nextLine().trim();
+        System.out.print("> Enter New Phone: "); String phone = scanner.nextLine().trim();
+
+        try (Connection conn = DBConnection.getConnection()) {
+            String sql = "UPDATE students SET name = ?, email = ?, phone = ? WHERE student_id = ?";
+            PreparedStatement pstmt = conn.prepareStatement(sql);
+            pstmt.setString(1, name);
+            pstmt.setString(2, email);
+            pstmt.setString(3, phone);
+            pstmt.setInt(4, id);
+
+            if (pstmt.executeUpdate() > 0) {
+                System.out.println("\n\t<  Student Profile Updated Successfully!  >");
+            } else {
+                System.out.println("Student ID not found.");
+            }
+        } catch (SQLException e) { System.out.println("Error: " + e.getMessage()); }
+    }
+
     private static void viewAllStudents() {
         System.out.println("\n ----------------------------");
         System.out.println("|      View All Students     |");
@@ -184,38 +226,6 @@ public class Main {
                     rs.getInt("student_id"), rs.getString("name"), rs.getString("email"), rs.getString("phone"));
             }
             System.out.println(" " + drawLine("-", 73));
-        } catch (SQLException e) { System.out.println(e.getMessage()); }
-    }
-
-    private static void updateMarks() {
-        System.out.println("\n -----------------------");
-        System.out.println("|      Update Marks     |");
-        System.out.println(" -----------------------");
-        System.out.print("Enter Student ID: "); int sId = scanner.nextInt();
-        System.out.print("Enter Course ID: "); int cId = scanner.nextInt();
-        System.out.print("Enter Marks: "); double m = scanner.nextDouble();
-        try (Connection conn = DBConnection.getConnection()) {
-            String sql = "UPDATE enrollments SET marks = ? WHERE student_id = ? AND course_id = ?";
-            PreparedStatement pstmt = conn.prepareStatement(sql);
-            pstmt.setDouble(1, m);
-            pstmt.setInt(2, sId);
-            pstmt.setInt(3, cId);
-            if(pstmt.executeUpdate() > 0) System.out.println("\n <  Marks Updated Successfully.  >");
-        } catch (SQLException e) { System.out.println(e.getMessage()); }
-    }
-
-    private static void deleteStudent() {
-        System.out.println("\n -------------------------");
-        System.out.println("|      Delete Student     |");
-        System.out.println(" -------------------------");
-        System.out.print("\n> Enter Student ID to delete: ");
-        int id = scanner.nextInt();
-        try (Connection conn = DBConnection.getConnection()) {
-            // Because of foreign keys, deleting from 'users' will often handle 'students' if ON DELETE CASCADE is set.
-            String sql = "DELETE FROM users WHERE user_id = ?";
-            PreparedStatement pstmt = conn.prepareStatement(sql);
-            pstmt.setInt(1, id);
-            if(pstmt.executeUpdate() > 0) System.out.println("\n <  Student records removed.  >");
         } catch (SQLException e) { System.out.println(e.getMessage()); }
     }
 
@@ -243,8 +253,6 @@ public class Main {
             System.out.println("\n ----------------------");
             System.out.println("|      Course List     |");
             System.out.println(" ----------------------");
-            
-            // වගුවේ ඉහළ සීමාව (drawLine භාවිතා කර)
             System.out.println(" "+drawLine("-", 58));
             System.out.printf("| %-5s | %-30s | %-15s |%n", "ID", "Course Name", "Course Code");
             System.out.println(" "+drawLine("-", 58));
@@ -261,6 +269,23 @@ public class Main {
         } catch (SQLException e) {
             System.out.println("Database Error: " + e.getMessage());
         }
+    }
+
+    private static void addMarks() {
+        System.out.println("\n -----------------------");
+        System.out.println("|       Add Marks       |");
+        System.out.println(" -----------------------");
+        System.out.print("> Enter Student ID: "); int sId = scanner.nextInt();
+        System.out.print("> Enter Course ID: "); int cId = scanner.nextInt();
+        System.out.print("> Enter Marks: "); double m = scanner.nextDouble();
+        try (Connection conn = DBConnection.getConnection()) {
+            String sql = "INSERT INTO enrollments (student_id, course_id, marks) VALUES (?, ?, ?)";
+            PreparedStatement pstmt = conn.prepareStatement(sql);
+            pstmt.setInt(1, sId);
+            pstmt.setInt(2, cId);
+            pstmt.setDouble(3, m);
+            if(pstmt.executeUpdate() > 0) System.out.println("\n <  Marks Added Successfully.  >");
+        } catch (SQLException e) { System.out.println(e.getMessage()); }
     }
 
     private static void viewMyResults() {
