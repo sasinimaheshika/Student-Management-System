@@ -97,7 +97,8 @@ public class Main {
                 case 5: addCourse(); break;
                 case 6: viewAllCourses(); break;
                 case 7: addMarks(); break; 
-                case 8: logout(); break;
+                case 8: viewAllMarks(); break;
+                case 9: logout(); break;
                 default: System.out.println("Invalid choice.");
             }
         } else {
@@ -126,8 +127,6 @@ public class Main {
         System.out.println("\n <  Logged out Successfully.  >");
     }
 
-    // --- ENHANCED CRUD METHODS ---
-
     private static void addStudent() {
         System.out.println("\n --------------------------");
         System.out.println("|      Add New Student     |");
@@ -141,9 +140,8 @@ public class Main {
         Connection conn = null;
         try {
             conn = DBConnection.getConnection();
-            conn.setAutoCommit(false); // Start Transaction
+            conn.setAutoCommit(false);
 
-            // Insert into users
             String userSql = "INSERT INTO users (username, password, role) VALUES (?, ?, 'STUDENT')";
             PreparedStatement p1 = conn.prepareStatement(userSql, Statement.RETURN_GENERATED_KEYS);
             p1.setString(1, uname);
@@ -153,7 +151,6 @@ public class Main {
             ResultSet rs = p1.getGeneratedKeys();
             if (rs.next()) {
                 int newId = rs.getInt(1);
-                // Insert into students using the same ID
                 String studentSql = "INSERT INTO students (student_id, name, email, phone) VALUES (?, ?, ?, ?)";
                 PreparedStatement p2 = conn.prepareStatement(studentSql);
                 p2.setInt(1, newId);
@@ -163,7 +160,7 @@ public class Main {
                 p2.executeUpdate();
             }
 
-            conn.commit(); // Save the all changes
+            conn.commit();
             System.out.println("\n <  Student & Logins Created Successfully.  >");
         } catch (SQLException e) {
             try { if(conn != null) conn.rollback(); } catch(SQLException ex) {}
@@ -178,7 +175,6 @@ public class Main {
         System.out.print("> Enter Student ID to delete: ");
         int id = scanner.nextInt();
         try (Connection conn = DBConnection.getConnection()) {
-            // Because of foreign keys, deleting from 'users' will often handle 'students' if ON DELETE CASCADE is set.
             String sql = "DELETE FROM users WHERE user_id = ?";
             PreparedStatement pstmt = conn.prepareStatement(sql);
             pstmt.setInt(1, id);
@@ -286,6 +282,26 @@ public class Main {
             pstmt.setDouble(3, m);
             if(pstmt.executeUpdate() > 0) System.out.println("\n <  Marks Added Successfully.  >");
         } catch (SQLException e) { System.out.println(e.getMessage()); }
+    }
+
+    private static void viewAllMarks() {
+        try (Connection conn = DBConnection.getConnection()) {
+            String sql = "SELECT s.name, c.course_name, e.marks " +
+                         "FROM enrollments e " +
+                         "JOIN students s ON e.student_id = s.student_id " +
+                         "JOIN courses c ON e.course_id = c.course_id";
+            ResultSet rs = conn.createStatement().executeQuery(sql);
+
+            System.out.println("\n " + drawLine("-", 66));
+            System.out.printf("| %-20s | %-30s | %-8s |%n", "Student Name", "Course Name", "Marks");
+            System.out.println(" " + drawLine("-", 66));
+
+            while (rs.next()) {
+                System.out.printf("| %-20s | %-30s | %-8.2f |%n",
+                    rs.getString("name"), rs.getString("course_name"), rs.getDouble("marks"));
+            }
+            System.out.println(" " + drawLine("-", 66));
+        } catch (SQLException e) { System.out.println("Error: " + e.getMessage()); }
     }
 
     private static void viewMyResults() {

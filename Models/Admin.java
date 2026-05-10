@@ -22,6 +22,7 @@ public class Admin extends User {
         System.out.println("5. Add New Course");
         System.out.println("6. View All Courses");
         System.out.println("7. Add Marks");
-        System.out.println("8. Logout");
+        System.out.println("8. View All Marks");
+        System.out.println("9. Logout");
     }
 }
