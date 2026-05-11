@@ -127,6 +127,8 @@ public class Main {
         System.out.println("\n <  Logged out Successfully.  >");
     }
 
+    // --- ENHANCED CRUD METHODS ---
+
     private static void addStudent() {
         System.out.println("\n --------------------------");
         System.out.println("|      Add New Student     |");
@@ -140,8 +142,9 @@ public class Main {
         Connection conn = null;
         try {
             conn = DBConnection.getConnection();
-            conn.setAutoCommit(false);
+            conn.setAutoCommit(false); // Start Transaction
 
+            // Insert into users
             String userSql = "INSERT INTO users (username, password, role) VALUES (?, ?, 'STUDENT')";
             PreparedStatement p1 = conn.prepareStatement(userSql, Statement.RETURN_GENERATED_KEYS);
             p1.setString(1, uname);
@@ -151,6 +154,7 @@ public class Main {
             ResultSet rs = p1.getGeneratedKeys();
             if (rs.next()) {
                 int newId = rs.getInt(1);
+                // Insert into students using the same ID
                 String studentSql = "INSERT INTO students (student_id, name, email, phone) VALUES (?, ?, ?, ?)";
                 PreparedStatement p2 = conn.prepareStatement(studentSql);
                 p2.setInt(1, newId);
@@ -160,7 +164,7 @@ public class Main {
                 p2.executeUpdate();
             }
 
-            conn.commit();
+            conn.commit(); // Save the all changes
             System.out.println("\n <  Student & Logins Created Successfully.  >");
         } catch (SQLException e) {
             try { if(conn != null) conn.rollback(); } catch(SQLException ex) {}
@@ -175,6 +179,7 @@ public class Main {
         System.out.print("> Enter Student ID to delete: ");
         int id = scanner.nextInt();
         try (Connection conn = DBConnection.getConnection()) {
+            // Because of foreign keys, deleting from 'users' will often handle 'students' if ON DELETE CASCADE is set.
             String sql = "DELETE FROM users WHERE user_id = ?";
             PreparedStatement pstmt = conn.prepareStatement(sql);
             pstmt.setInt(1, id);
@@ -311,12 +316,14 @@ public class Main {
             PreparedStatement pstmt = conn.prepareStatement(sql);
             pstmt.setInt(1, currentUser.getUserId());
             ResultSet rs = pstmt.executeQuery();
-            System.out.println("\n " + drawLine("-", 20));
-            System.out.println("|     My Results     |");
-            System.out.println(" " + drawLine("-", 20));
+            System.out.println("\n " + drawLine("-", 37));
+            System.out.printf("| %-20s | %-12s |%n", "Subject", " Marks");
+            System.out.println(" " + drawLine("-", 37));
             while (rs.next()) {
-                System.out.println(rs.getString("course_name") + ": " + rs.getDouble("marks"));
+                System.out.printf("| %-20s | %-12.2f |%n",
+                    rs.getString("course_name"), rs.getDouble("marks"));
             }
+            System.out.println(" " + drawLine("-", 37));
         } catch (SQLException e) { System.out.println(e.getMessage()); }
     }
 
